@@ -3,8 +3,8 @@ using UnityEngine ;
 
 
 public class TileBox : MonoBehaviour
-{
-  public int index { get; set; }
+{  
+    public int index { get; set; }
     public StateMark stateMark { get; private set; }
     public bool isMarked { get; private set; }
 
@@ -40,12 +40,30 @@ public class TileBox : MonoBehaviour
          stateMark = stateMark;
          
          StartCoroutine(ScaleAnimation());
-         spriteRenderer.color = color;
+        // spriteRenderer.color = color;
          spriteRenderer.sprite = sprite;
          
          if (circleCollider != null)
          {
             circleCollider.enabled = false;
+         }
+      }
+   }
+   
+   public void UndoMark()
+   {
+      if (isMarked)
+      {
+         isMarked = false;
+         stateMark = StateMark.None;
+
+         StartCoroutine(ScaleAnimation()); 
+         //spriteRenderer.color = Color.white; 
+         spriteRenderer.sprite = null; 
+
+         if (circleCollider != null)
+         {
+            circleCollider.enabled = true; 
          }
       }
    }

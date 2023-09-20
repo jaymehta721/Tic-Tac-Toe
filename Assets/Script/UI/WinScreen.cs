@@ -16,9 +16,9 @@ namespace TicTacToe.UI
       [SerializeField] private Board board ;
 
       private void Start () {
+         
          uiRestartButton.onClick.AddListener (() => SceneManager.LoadScene (0)) ;
          board.OnWinAction += OnWinEvent ;
-
          uiCanvas.SetActive (false) ;
       }
 

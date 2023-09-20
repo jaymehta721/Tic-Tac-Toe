@@ -26,22 +26,42 @@ namespace TicTacToe
 
       public UnityAction<StateMark,Color> OnWinAction ;
 
-      private Camera cam ;
-      private StateMark[] marks ;
+      private Camera cam ; 
+      public StateMark[] marks { get; private set; }
       private StateMark currentPlayerMark ;
       private bool canPlay ;
       private LineRenderer lineRenderer ;
       private int marksCount = 0 ;
-      
+      private StateMark playerMark = StateMark.X;
+      private StateMark aiMark = StateMark.O;   
+
       [Header("Board Size")]
       [SerializeField] private int bordSize = 3; // Adjust as needed
-    
+      [Header("AI Agent")]
+      [SerializeField] private TicTacToeAI aIAgent;
+
+      public StateMark PlayerMark
+      {
+         get { return playerMark; }
+         set
+         {
+            playerMark = value;
+            currentPlayerMark = value;
+         }
+      }
+      
+      
+      public StateMark AiMark
+      {
+         get { return aiMark; }
+         set { aiMark = value; }
+      }
+
       private void Start()
       {
          cam = Camera.main;
          lineRenderer = GetComponent<LineRenderer>();
          lineRenderer.enabled = false;
-         currentPlayerMark = StateMark.X;
          marks = new StateMark[9];
          canPlay = true;
 
@@ -75,9 +95,32 @@ namespace TicTacToe
 
       private void Update()
       {
-         if (canPlay && Input.GetMouseButtonUp(0))
+         if (canPlay)
          {
-            HandleClick();
+            if (currentPlayerMark == playerMark) // Check if it's the player's turn
+            {
+               // Handle player input
+               if (Input.GetMouseButtonUp(0))
+               {
+                  Vector2 touchPosition = cam.ScreenToWorldPoint(Input.mousePosition);
+                  Collider2D hit = Physics2D.OverlapCircle(touchPosition, touchRadius, boxesLayerMask);
+
+                  if (hit)
+                  {
+                     HitBox(hit.GetComponent<TileBox>());
+                  }
+               }
+            }
+            else if (currentPlayerMark == aiMark) // Check if it's the AI's turn
+            {
+               // It's the AI's turn, make the AI move
+               int aiMove = aIAgent.MakeMove(this);
+               if (aiMove >= 0)
+               {
+                  // Make the AI move on the board
+                  HitBox(transform.GetChild(aiMove).GetComponent<TileBox>());
+               }
+            }
          }
       }
    
@@ -137,7 +180,7 @@ namespace TicTacToe
          canPlay = false;
       }
    
-      private bool CheckForWin()
+      public bool CheckForWin()
       {
          for (int i = 0; i < bordSize; i++)
          {
@@ -153,22 +196,22 @@ namespace TicTacToe
       private bool CheckRow(int row)
       {
          int startIndex = row * bordSize;
-         return AreBoxesMatched(startIndex, startIndex + 1, startIndex + 2);
+         return AreBoxesMatched(startIndex, startIndex + 1, startIndex + 2,currentPlayerMark);
       }
 
       private bool CheckColumn(int col)
       {
-         return AreBoxesMatched(col, col + bordSize, col + bordSize * 2);
+         return AreBoxesMatched(col, col + bordSize, col + bordSize * 2,currentPlayerMark);
       }
 
       private bool CheckDiagonals()
       {
-         return AreBoxesMatched(0, 4, 8) || AreBoxesMatched(2, 4, 6);
+         return AreBoxesMatched(0, 4, 8,currentPlayerMark) || AreBoxesMatched(2, 4, 6,currentPlayerMark);
       }
 
-      private bool AreBoxesMatched(int i, int j, int k)
+      public bool AreBoxesMatched(int i, int j, int k, StateMark mark)
       {
-         bool matched = marks[i] == currentPlayerMark && marks[j] == currentPlayerMark && marks[k] == currentPlayerMark;
+         bool matched = marks[i] == mark && marks[j] == mark && marks[k] == mark;
 
          if (matched)
          {
@@ -176,6 +219,18 @@ namespace TicTacToe
          }
 
          return matched;
+      }
+      
+      public void MakeMove(int index, StateMark mark)
+      {
+         marks[index] = mark;
+         transform.GetChild(index).GetComponent<TileBox>().SetAsMarked(GetSprite(), mark, GetColor());
+      }
+
+      public void UndoMove(int index)
+      {
+         marks[index] = StateMark.None;
+         transform.GetChild(index).GetComponent<TileBox>().UndoMark();
       }
 
       private IEnumerator DrawLine(int i, int k)
