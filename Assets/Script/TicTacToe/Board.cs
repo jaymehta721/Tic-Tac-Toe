@@ -25,11 +25,11 @@ namespace TicTacToe
       [SerializeField] private Color colorO ;
 
       public UnityAction<StateMark,Color> OnWinAction ;
-
+      public bool symbolSelectionCompleted = false;
       private Camera cam ; 
       public StateMark[] marks { get; private set; }
       private StateMark currentPlayerMark ;
-      private bool canPlay ;
+      [SerializeField] private bool canPlay ;
       private LineRenderer lineRenderer ;
       private int marksCount = 0 ;
       private StateMark playerMark = StateMark.X;
@@ -57,21 +57,24 @@ namespace TicTacToe
          set { aiMark = value; }
       }
 
-      private void Start()
+      public void InitializeGame(StateMark playerMark)
       {
+         PlayerMark = playerMark;
+         AiMark = (playerMark == StateMark.X) ? StateMark.O : StateMark.X;
+         symbolSelectionCompleted = true;
+         canPlay = true;
          cam = Camera.main;
          lineRenderer = GetComponent<LineRenderer>();
          lineRenderer.enabled = false;
          marks = new StateMark[9];
-         canPlay = true;
-
          InstantiateBoard();
+    
       }
       
       private void InstantiateBoard()
       {
-         float tileSizeX = 0.35f; // Adjust as needed
-         float tileSizeY = 0.35f; // Adjust as needed
+         float tileSizeX = 0.35f; 
+         float tileSizeY = 0.35f;
 
          int rows = bordSize;
          int columns = bordSize;
@@ -95,12 +98,13 @@ namespace TicTacToe
 
       private void Update()
       {
+     
          if (canPlay)
          {
-            if (currentPlayerMark == playerMark) // Check if it's the player's turn
+            print(symbolSelectionCompleted);
+            if (currentPlayerMark == playerMark) 
             {
-               // Handle player input
-               if (Input.GetMouseButtonUp(0))
+               if (Input.GetMouseButtonUp(0) && symbolSelectionCompleted)
                {
                   Vector2 touchPosition = cam.ScreenToWorldPoint(Input.mousePosition);
                   Collider2D hit = Physics2D.OverlapCircle(touchPosition, touchRadius, boxesLayerMask);
@@ -111,13 +115,11 @@ namespace TicTacToe
                   }
                }
             }
-            else if (currentPlayerMark == aiMark) // Check if it's the AI's turn
+            else if (currentPlayerMark == aiMark) 
             {
-               // It's the AI's turn, make the AI move
                int aiMove = aIAgent.MakeMove(this);
                if (aiMove >= 0)
                {
-                  // Make the AI move on the board
                   HitBox(transform.GetChild(aiMove).GetComponent<TileBox>());
                }
             }

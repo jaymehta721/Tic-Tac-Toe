@@ -7,86 +7,64 @@ public class TicTacToeAI : MonoBehaviour
 {
     public int MakeMove(Board board)
     {
-        // Check if the AI can win in the next move
+        int bestMove = -1;
+        int bestScore = int.MinValue;
+
+        // Loop through the board to find the best move
         for (int i = 0; i < board.marks.Length; i++)
         {
             if (board.marks[i] == StateMark.None)
             {
-                board.MakeMove(i, StateMark.O);
-                if (board.CheckForWin())
-                {
-                    board.UndoMove(i);
-                    return i;
-                }
-                board.UndoMove(i);
-            }
-        }
+                // Try placing the AI's mark
+                board.MakeMove(i, board.AiMark);
+                int score = MiniMax(board, 0, false);
+                board.UndoMove(i); // Undo the move
 
-        // Check if the player is about to win and block them
-        for (int i = 0; i < board.marks.Length; i++)
-        {
-            if (board.marks[i] == StateMark.None)
-            {
-                board.MakeMove(i, StateMark.X);
-                if (board.CheckForWin())
+                // Update the best move if this move has a higher score
+                if (score > bestScore)
                 {
-                    board.UndoMove(i);
-                    return i;
-                }
-                board.UndoMove(i);
-            }
-        }
-
-        // Try to create two-in-a-row opportunities
-        int[] moveOrder = { 4, 0, 2, 6, 8, 1, 3, 5, 7 };
-
-        foreach (int i in moveOrder)
-        {
-            if (board.marks[i] == StateMark.None)
-            {
-                board.MakeMove(i, StateMark.O);
-                bool twoInARow = CheckTwoInARow(board, StateMark.O);
-                board.UndoMove(i);
-                if (twoInARow)
-                {
-                    return i;
+                    bestScore = score;
+                    bestMove = i;
                 }
             }
         }
 
-        // If none of the above conditions are met, make a random move
-        int randomMove;
-        do
-        {
-            randomMove = Random.Range(0, board.marks.Length);
-        } while (board.marks[randomMove] != StateMark.None);
-
-        return randomMove;
+        return bestMove;
     }
-    
-    private bool CheckTwoInARow(Board board, StateMark mark)
+    private int MiniMax(Board board, int depth, bool isMaximizing)
     {
-        for (int i = 0; i < 3; i++)
+        if (board.CheckForWin())
         {
-            // Check rows
-            if (board.AreBoxesMatched(i * 3, i * 3 + 1, i * 3 + 2, mark))
-            {
-                return true;
-            }
+            return isMaximizing ? -1 : 1; // AI wants to minimize opponent's score and maximize its own score
+        }
+        else if (board.marks.Length == 9) // The board is full (draw)
+        {
+            return 0;
+        }
 
-            // Check columns
-            if (board.AreBoxesMatched(i, i + 3, i + 6, mark))
+        int bestScore = isMaximizing ? int.MinValue : int.MaxValue;
+
+        for (int i = 0; i < board.marks.Length; i++)
+        {
+            if (board.marks[i] == StateMark.None)
             {
-                return true;
+                // Try placing the mark for the current player
+                board.MakeMove(i, isMaximizing ? board.AiMark : board.PlayerMark);
+                int score = MiniMax(board, depth + 1, !isMaximizing);
+                board.UndoMove(i); // Undo the move
+
+                // Update the best score based on the current player
+                if (isMaximizing)
+                {
+                    bestScore = Mathf.Max(bestScore, score);
+                }
+                else
+                {
+                    bestScore = Mathf.Min(bestScore, score);
+                }
             }
         }
 
-        // Check diagonals
-        if (board.AreBoxesMatched(0, 4, 8, mark) || board.AreBoxesMatched(2, 4, 6, mark))
-        {
-            return true;
-        }
-
-        return false;
+        return bestScore;
     }
 }

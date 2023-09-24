@@ -15,16 +15,16 @@ public class SplashScreen : MonoBehaviour
 
    private void Start()
    {
-      crossButton.onClick.AddListener(() => OnStartButtonClick("x"));
-      circleButton.onClick.AddListener(() => OnStartButtonClick("o"));
+      crossButton.onClick.AddListener(() => OnStartButtonClick(StateMark.X));
+      circleButton.onClick.AddListener(() => OnStartButtonClick(StateMark.O));
    }
 
 
-   private void OnStartButtonClick(string val)
+   private void OnStartButtonClick(StateMark selectedMark)
    {
       splashCanvas.enabled = false;
-      board.PlayerMark = val.Equals("x") ? StateMark.X : StateMark.O;
-      board.AiMark = val.Equals("o") ? StateMark.O: StateMark.X;
+      board.InitializeGame(selectedMark);
+
    }
 
 
